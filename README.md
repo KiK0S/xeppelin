@@ -8,6 +8,8 @@ Xeppelin is a contest watcher software that keeps track of file modifications du
 pip install xeppelin
 ```
 
+![](./example.png)
+
 ## Commands
 
 - **Start Watching**:   ```
