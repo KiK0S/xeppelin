@@ -10,6 +10,17 @@ pip install xeppelin
 
 ![](./example.png)
 
+## Workflow
+
+1. Prior to the contest, create a new contest directory. Let's say it's called icpc-wf.
+2. Run `xeppelin start icpc-wf` to start watching the directory.
+3. Start the contest by writing a template file. Xeppelin team uses `template.cpp`.
+4. When solving a problem, create a new file with the problem letter. For example, if you're solving problem A, create a file named `A.cpp`.
+5. When you compile the code, use `-o` flag to specify the problem letter. For example, `g++ A.cpp -o A`.
+6. After the contest, run `xeppelin stop icpc-wf` to stop watching the directory.
+7. Looking through your submissions, you can see the time of each successful submission. Add them manually to the log file with `xeppelin log icpc-wf "A solved 1:30"`.
+8. Run `xeppelin show icpc-wf` to see the visualization and get the image on your disk.
+
 ## Commands
 
 - **Start Watching**:   ```
@@ -50,3 +61,12 @@ sudo apt install inotify-tools
 
 pip install pandas matplotlib numpy
 ```
+
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a pull request. In the ideal scenario, the feature should be optional and could be turned on/off with a flag.
+
+## License
+
+This project is open-sourced under the MIT License - see the LICENSE file for details.
