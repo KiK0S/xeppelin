@@ -4,8 +4,9 @@ import os
 import sys
 import subprocess
 from datetime import datetime
-import xeppelin_logging
+import xeppelin.xeppelin_logging as xeppelin_logging
 import matplotlib.pyplot as plt
+import pkg_resources
 
 # put to the parent directory to avoid infinite loops
 LOG_DIR = ".."
@@ -15,8 +16,11 @@ def start(contest_name):
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
     
-    # Start the watch_files.sh script in the background
-    subprocess.Popen(["./xeppelin.sh", log_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # Use pkg_resources to find the script path
+    script_path = pkg_resources.resource_filename('xeppelin', 'xeppelin.sh')
+    
+    # Start the xeppelin.sh script in the background
+    subprocess.Popen([script_path, log_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print(f"Started watching for contest '{contest_name}'. Log file: {log_file}")
 
 def stop(contest_name):
@@ -64,9 +68,9 @@ def main():
         stop(contest_name)
     elif command == "show":
         show(contest_name)
-    elif command == "log-submissions":
+    elif command == "log":
         if len(sys.argv) < 4:
-            print("Usage: xeppelin log-submissions <contest_name> <submission_info>")
+            print("Usage: xeppelin log <contest_name> <submission_info>")
             return
         submission_info = sys.argv[3]
         log_submissions(contest_name, submission_info)

@@ -2,6 +2,12 @@
 
 Xeppelin is a contest watcher software that keeps track of file modifications during a contest and creates visualizations of your activity.
 
+## Installation
+
+```
+pip install xeppelin
+```
+
 ## Commands
 
 - **Start Watching**:   ```
