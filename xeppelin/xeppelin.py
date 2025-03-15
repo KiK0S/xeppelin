@@ -3,6 +3,7 @@
 import os
 import sys
 import subprocess
+import argparse
 from datetime import datetime
 import xeppelin.xeppelin_logging as xeppelin_logging
 import matplotlib.pyplot as plt
@@ -28,7 +29,7 @@ def stop(contest_name):
     subprocess.run(["pkill", "xeppelin.sh"])
     print(f"Stopped watching for contest '{contest_name}'.")
 
-def show(contest_name):
+def show(contest_name, duration=300, freeze_time=None):
     log_file = os.path.join(LOG_DIR, f"{contest_name}.log")
     if not os.path.exists(log_file):
         print(f"No log file found for contest '{contest_name}'.")
@@ -44,7 +45,7 @@ def show(contest_name):
         return
         
     activities = xeppelin_logging.group_activities(log_lines, contest_start)
-    fig = xeppelin_logging.plot_activities(contest_name, activities, solved_times)
+    fig = xeppelin_logging.plot_activities(contest_name, activities, solved_times, duration, freeze_time)
     fig.savefig(os.path.join(LOG_DIR, f"{contest_name}.png"))
     plt.show()
 
@@ -55,27 +56,47 @@ def log_submissions(contest_name, submission_info):
     print(f"Logged submission info for contest '{contest_name}'.")
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: xeppelin <command> <contest_name> [additional_args]")
+    # Create the top-level parser
+    parser = argparse.ArgumentParser(description='Xeppelin contest watcher utility')
+    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    
+    # Create parser for "start" command
+    start_parser = subparsers.add_parser('start', help='Start watching the current directory for a contest')
+    start_parser.add_argument('contest_name', help='Name of the contest to start watching')
+    
+    # Create parser for "stop" command
+    stop_parser = subparsers.add_parser('stop', help='Stop watching for a contest')
+    stop_parser.add_argument('contest_name', help='Name of the contest to stop watching')
+    
+    # Create parser for "show" command
+    show_parser = subparsers.add_parser('show', help='Display visualization of contest activities')
+    show_parser.add_argument('contest_name', help='Name of the contest to visualize')
+    show_parser.add_argument('--duration', type=int, default=300, 
+                            help='Maximum time (in minutes) to show on the visualization axis (default: 300)')
+    show_parser.add_argument('--freeze', type=str, default=None, 
+                            help='Add a freeze period indicator starting at specified time (format: HH:MM or minutes)')
+    
+    # Create parser for "log" command
+    log_parser = subparsers.add_parser('log', help='Log submission information for a contest')
+    log_parser.add_argument('contest_name', help='Name of the contest to log submissions for')
+    log_parser.add_argument('submission_info', help='Submission information to log (e.g., "A solved 1:30")')
+    
+    # Parse arguments
+    args = parser.parse_args()
+    
+    if args.command is None:
+        parser.print_help()
         return
     
-    command = sys.argv[1]
-    contest_name = sys.argv[2]
-    
-    if command == "start":
-        start(contest_name)
-    elif command == "stop":
-        stop(contest_name)
-    elif command == "show":
-        show(contest_name)
-    elif command == "log":
-        if len(sys.argv) < 4:
-            print("Usage: xeppelin log <contest_name> <submission_info>")
-            return
-        submission_info = sys.argv[3]
-        log_submissions(contest_name, submission_info)
-    else:
-        print(f"Unknown command: {command}")
+    # Execute the appropriate command
+    if args.command == 'start':
+        start(args.contest_name)
+    elif args.command == 'stop':
+        stop(args.contest_name)
+    elif args.command == 'show':
+        show(args.contest_name, args.duration, args.freeze)
+    elif args.command == 'log':
+        log_submissions(args.contest_name, args.submission_info)
 
 if __name__ == "__main__":
     main() 
