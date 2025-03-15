@@ -32,8 +32,19 @@ pip install xeppelin
   Stops watching for the specified contest.
 
 - **Show Visualization**:   ```
-  xeppelin show <contest_name>  ```
+  xeppelin show <contest_name> [--duration MINUTES] [--freeze TIME]  ```
   Displays a visualization of the activities logged for the specified contest.
+  
+  Options:
+  - `--duration MINUTES`: Sets the maximum time (in minutes) to show on the visualization axis (default: 300)
+  - `--freeze TIME`: Adds a freeze period indicator starting at specified time (format: HH:MM or minutes)
+  
+  Examples:
+  ```
+  xeppelin show icpc-wf --duration 240
+  xeppelin show icpc-wf --freeze 4:00
+  xeppelin show icpc-wf --duration 240 --freeze 180
+  ```
 
 - **Log Submissions**:   ```
   xeppelin log-submissions <contest_name> <submission_info>  ```
@@ -43,6 +54,11 @@ pip install xeppelin
   ```
   xeppelin log-submissions test "A solved 1:30"
   ```
+
+- **Help**:   ```
+  xeppelin --help
+  xeppelin <command> --help  ```
+  Shows help information about Xeppelin commands and their options.
 
 ## Format
 
