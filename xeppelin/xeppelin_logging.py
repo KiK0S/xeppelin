@@ -240,8 +240,10 @@ def group_activities(log_lines, contest_start):
     
     return activities
 
-def plot_activities(title, activities, solved_times):
+def plot_activities(title, activities, solved_times, duration=300, freeze_time=None):
     fig, ax = plt.subplots(figsize=(15, 8))
+    
+    max_time = duration
     
     # Get all problems that appear in activities or solved_times
     existing_problems = set(k[0] for k in activities.keys()) | set(solved_times.keys())
@@ -264,8 +266,28 @@ def plot_activities(title, activities, solved_times):
         'idle': '#e74c3c', 
     }
 
-    # Add frozen scoreboard background for last hour
-    ax.axvspan(240, 300, color='lightblue', alpha=0.4, zorder=1)
+    # Add frozen scoreboard background if freeze_time is provided
+    if freeze_time is not None:
+        # If freeze_time is a string like "4:00", convert it to minutes
+        if isinstance(freeze_time, str):
+            if ":" in freeze_time:
+                hours, minutes = freeze_time.split(":")
+                freeze_minutes = int(hours) * 60 + int(minutes)
+            else:
+                freeze_minutes = int(freeze_time)
+        else:
+            freeze_minutes = freeze_time
+            
+        ax.axvspan(freeze_minutes, max_time, color='lightblue', alpha=0.4, zorder=1)
+        
+        # Add snowflake symbol in the middle of the freeze section
+        freeze_middle = (freeze_minutes + max_time) / 2
+        ax.text(freeze_middle, len(all_problems)/2, '❄️', fontsize=150, 
+                horizontalalignment='center',
+                verticalalignment='center',
+                color='lightblue',
+                alpha=0.5, 
+                zorder=-9999)
     
     # Reverse problems list so A is at the top
     all_problems.reverse()
@@ -274,6 +296,11 @@ def plot_activities(title, activities, solved_times):
         if problem == '0':
             # Plot idle periods
             for start, end in activities[('0', 'idle')]:
+                # Limit end time to max_time
+                end = min(end, max_time)
+                if start >= max_time:
+                    continue
+                
                 ax.barh(i, end-start, left=start, height=1,
                        color=colors['idle'], alpha=0.7)
                 if end - start >= 10:
@@ -286,25 +313,40 @@ def plot_activities(title, activities, solved_times):
         # Draw solved state first (as background)
         if problem in solved_times and solved_times[problem] is not None:
             solved_time = solved_times[problem]
-            ax.barh(i, 300 - solved_time, left=solved_time, 
-                   height=1, color=colors['solved'], alpha=0.5)
-            # Add star marker at the solved point
-            ax.plot(solved_time, i, marker='*', color='gold', 
-                   markersize=20, zorder=5)
+            if solved_time <= max_time:
+                ax.barh(i, max_time - solved_time, left=solved_time, 
+                       height=1, color=colors['solved'], alpha=0.5)
+                # Add star marker at the solved point
+                ax.plot(solved_time, i, marker='*', color='gold', 
+                       markersize=20, zorder=5)
         
         # Draw activity blocks
         key = (problem, "activity")
         if key in activities:
             for block in activities[key]:
+                # Skip blocks completely outside our time range
+                if block.get_start_time() >= max_time:
+                    continue
+                    
+                # Limit display to max_time
+                end_time = min(block.get_end_time(), max_time)
+                
+                # Create a modified block if necessary to respect max_time
+                if end_time < block.get_end_time():
+                    # Create a temporary modified copy of the block for display
+                    temp_block = ActivityBlock()
+                    for time in block.cpp_modifications:
+                        if time < max_time:
+                            temp_block.add_cpp_modification(time)
+                    for time in block.binary_modifications:
+                        if time < max_time:
+                            temp_block.add_binary_modification(time)
+                    for time in block.other_modifications:
+                        if time < max_time:
+                            temp_block.add_other_modification(time)
+                    block = temp_block
+                
                 block.display(ax, i, colors)
-    
-    # Add snowflake symbol
-    ax.text(270, len(all_problems)/2, '❄️', fontsize=150, 
-            horizontalalignment='center',
-            verticalalignment='center',
-            color='lightblue',
-            alpha=0.5, 
-            zorder=-9999)
     
     ax.set_yticks(range(len(all_problems)))
     ax.set_yticklabels(all_problems)
@@ -337,9 +379,10 @@ def plot_activities(title, activities, solved_times):
     ax.tick_params(axis='x', labelsize=15)
     
     # Set x-axis ticks every 60 minutes
-    ax.set_xticks(range(0, 301, 60))
+    ax.set_xticks(range(0, max_time + 1, 60))
 
     ax.set_ylim(-1, len(all_problems))
+    ax.set_xlim(0, max_time)
     
     # Make grid more visible
     ax.grid(True, axis='x', alpha=0.5, linestyle='--', linewidth=1.2)
