@@ -127,7 +127,7 @@ def parse_log_line(line):
     try:
         timestamp_str, action = line.strip().split(" - ")
         timestamp = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
-        return timestamp, action
+        return timestamp, action.lower()
     except:
         return None, None
 
@@ -170,7 +170,7 @@ def group_activities(log_lines, contest_start):
         timestamp, action = parse_log_line(line)
         if not timestamp:
             continue
-        for problem in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+        for problem in 'abcdefghijklmnopqrstuvwxyz':
             if f"./{problem}.cpp was modified" in action or f"./{problem} was modified" in action:
                 max_problem = max(max_problem, problem)
     print(f"max_problem: {max_problem}")
@@ -179,7 +179,7 @@ def group_activities(log_lines, contest_start):
     all_activity_times = []
     
     # Process each problem separately
-    for problem in range(ord('A'), ord(max_problem) + 1):
+    for problem in range(ord('a'), ord(max_problem) + 1):
         problem = chr(problem)
         
         # Group modifications by time proximity
@@ -215,7 +215,7 @@ def group_activities(log_lines, contest_start):
                 all_activity_times.append(minutes)
         
         # Add final block
-        if current_block and current_block.should_display():
+        if current_block: # and current_block.should_display():
             key = (problem, "activity")
             if key not in activities:
                 activities[key] = []
