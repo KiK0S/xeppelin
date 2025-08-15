@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='xeppelin',
-    version='0.2.1',
+    version='0.3.3',
     packages=find_packages(),
     include_package_data=True,
     install_requires=[

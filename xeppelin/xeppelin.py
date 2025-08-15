@@ -98,8 +98,9 @@ def main():
                             help='Name of the contest to visualize. Should match the name used with the start command.')
     show_parser.add_argument('--duration', type=int, default=300, 
                             help='Maximum time (in minutes) to show on the visualization axis (default: 300)')
-    show_parser.add_argument('--freeze', type=str, default=None, 
+    show_parser.add_argument('--freeze', type=str, default=240, 
                             help='Add a freeze period indicator starting at specified time (format: HH:MM or minutes as integer)')
+    # show_parser.add_argument('--problemset', type=str, default='abcdefghijklmno')
     show_parser.add_argument('--title', type=str, default=None,
                             help='Custom title for the visualization (default: contest name)')
     

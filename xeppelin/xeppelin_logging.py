@@ -142,16 +142,30 @@ def parse_solved_info(log_lines):
         match = re.match(r'([A-Z])\s+solved\s+(\d+):?(\d+)?', line)
         if match:
             problem, hours, minutes = match.groups()
+            problem = problem.lower()
             if minutes:  # hh:mm format
                 time = int(hours) * 60 + int(minutes)
             else:  # minutes only format
                 time = int(minutes)
             solved_times[problem] = time
         else:
-            match = re.match(r'([A-Z])\s+solved.*', line)
+            match = re.match(r'([A-Z])\s+solved\s+\-', line)
             if match:
                 problem = match.groups()[0]
+                problem = problem.lower()
                 solved_times[problem] = None
+            else:
+                match = re.match(r'([A-Z])\s+solved\s+\*', line)
+                if match:
+                    problem = match.groups()[0]
+                    problem = problem.lower()
+                    solved_times[problem] = -1
+        
+        match = re.match(r'solved: ([A-Z]+)', line)
+        if match:
+            for problem in match.groups()[0]:
+                solved_times[problem.lower()] = -1
+                
     return solved_times
 
 def find_contest_start(log_lines):
@@ -165,7 +179,7 @@ def find_contest_start(log_lines):
 
 def group_activities(log_lines, contest_start):
     # First find the last problem letter
-    max_problem = 'A'
+    max_problem = 'a'
     for line in log_lines:
         timestamp, action = parse_log_line(line)
         if not timestamp:
@@ -247,11 +261,10 @@ def plot_activities(title, activities, solved_times, duration=300, freeze_time=N
     
     # Get all problems that appear in activities or solved_times
     existing_problems = set(k[0] for k in activities.keys()) | set(solved_times.keys())
-    
     # Create full list of problems from A to the last one
     if existing_problems:
         last_problem = max(p for p in existing_problems if p != '0')
-        all_problems = [chr(ord('A') + i) for i in range(ord(last_problem) - ord('A') + 1)]
+        all_problems = [chr(ord('a') + i) for i in range(ord(last_problem) - ord('a') + 1)]
         # Add idle row at the bottom
         if ('0', 'idle') in activities:
             all_problems.append('0')
@@ -312,13 +325,22 @@ def plot_activities(title, activities, solved_times, duration=300, freeze_time=N
             
         # Draw solved state first (as background)
         if problem in solved_times and solved_times[problem] is not None:
-            solved_time = solved_times[problem]
-            if solved_time <= max_time:
-                ax.barh(i, max_time - solved_time, left=solved_time, 
-                       height=1, color=colors['solved'], alpha=0.5)
-                # Add star marker at the solved point
-                ax.plot(solved_time, i, marker='*', color='gold', 
-                       markersize=20, zorder=5)
+            if solved_times[problem] < 0:
+                solved_times[problem] = None
+                key = (problem, "activity")
+                if key in activities:
+                    for block in activities[key]:
+                        solved_times[problem] = block.get_end_time()
+
+
+            if solved_times[problem] is not None:
+                solved_time = solved_times[problem]
+                if solved_time <= max_time:
+                    ax.barh(i, max_time - solved_time, left=solved_time, 
+                        height=1, color=colors['solved'], alpha=0.5)
+                    # Add star marker at the solved point
+                    ax.plot(solved_time, i, marker='*', color='gold', 
+                        markersize=20, zorder=5)
         
         # Draw activity blocks
         key = (problem, "activity")
@@ -349,7 +371,8 @@ def plot_activities(title, activities, solved_times, duration=300, freeze_time=N
                 block.display(ax, i, colors)
     
     ax.set_yticks(range(len(all_problems)))
-    ax.set_yticklabels(all_problems)
+    all_problems_ = [chr(ord(p) - ord('a') + ord('A')) if p != '0' else '0' for p in all_problems]
+    ax.set_yticklabels(all_problems_)
     
     # Color problem labels based on solved status
     for i, problem in enumerate(all_problems):
