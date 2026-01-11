@@ -17,7 +17,7 @@ def start(contest_name):
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
 
-    # Use pkg_resources to find the script path
+    # Use importlib.resources to find the script path within the xeppelin package
     script_path = importlib.resources.files('xeppelin').joinpath('xeppelin.sh')
 
     # Start the xeppelin.sh script in the background
