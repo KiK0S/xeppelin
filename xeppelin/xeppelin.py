@@ -29,7 +29,7 @@ def stop(contest_name):
     subprocess.run(["pkill", "xeppelin.sh"])
     print(f"Stopped watching for contest '{contest_name}'.")
 
-def show(contest_name, duration=300, freeze_time=None, title=None):
+def show(contest_name, duration=300, freeze_time=None, title=None, template_name: str = 'template'):
     log_file = os.path.join(LOG_DIR, f"{contest_name}.log")
     if not os.path.exists(log_file):
         print(f"No log file found for contest '{contest_name}'.")
@@ -39,7 +39,7 @@ def show(contest_name, duration=300, freeze_time=None, title=None):
         log_lines = f.readlines()
 
     solved_times = xeppelin_logging.parse_solved_info(log_lines)
-    contest_start = xeppelin_logging.find_contest_start(log_lines)
+    contest_start = xeppelin_logging.find_contest_start(log_lines, template_name)
     if not contest_start:
         print("Could not find contest start!")
         return
@@ -92,7 +92,8 @@ def main():
   xeppelin show icpc-wf
   xeppelin show icpc-wf --duration 240
   xeppelin show icpc-wf --freeze 4:00
-  xeppelin show icpc-wf --duration 300 --freeze 240 --title "ICPC World Finals"'''
+  xeppelin show icpc-wf --template main
+  xeppelin show icpc-wf --duration 300 --freeze 240 --template main --title "ICPC World Finals"'''
     )
     show_parser.add_argument('contest_name',
                             help='Name of the contest to visualize. Should match the name used with the start command.')
@@ -100,6 +101,8 @@ def main():
                             help='Maximum time (in minutes) to show on the visualization axis (default: 300)')
     show_parser.add_argument('--freeze', type=str, default=240,
                             help='Add a freeze period indicator starting at specified time (format: HH:MM or minutes as integer)')
+    show_parser.add_argument('--template', type=str, default='template',
+                             help='Name of the template file (default: template)')
     # show_parser.add_argument('--problemset', type=str, default='abcdefghijklmno')
     show_parser.add_argument('--title', type=str, default=None,
                             help='Custom title for the visualization (default: contest name)')
@@ -129,7 +132,7 @@ def main():
     elif args.command == 'stop':
         stop(args.contest_name)
     elif args.command == 'show':
-        show(args.contest_name, args.duration, args.freeze, args.title)
+        show(args.contest_name, args.duration, args.freeze, args.title, args.template)
     elif args.command == 'log':
         log_submissions(args.contest_name, args.submission_info)
 
