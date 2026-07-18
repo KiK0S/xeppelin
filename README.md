@@ -23,6 +23,31 @@ pip install xeppelin
 
 ## Commands
 
+- **Initialize a contest**: `xeppelin init <name> <last_problem> [--template PATH]`
+
+  Creates the contest directory, moves `template.cpp` into it, creates problem files
+  from `A.cpp` through the given letter, adds `input.in`, `output.out`, and
+  `stress.py`, then starts the watcher. The command fails if the directory exists.
+
+  ```
+  xeppelin init icpc-wf E
+  xeppelin init regional H --template ~/templates/contest.cpp
+  ```
+
+- **Compile a problem**: `xeppelin compile <problem> [--no-debug] [--no-sanitize]`
+
+  Compiles `<problem>.cpp` with C++17, optimization, debug symbols, `DEBUG`, and
+  undefined-behavior, bounds, and address sanitizers by default.
+
+- **Run a problem**: `xeppelin run <problem> [--no-compile] [--no-debug] [--no-sanitize]`
+
+  Compiles by default, reads from `input.in`, and writes to `output.out`.
+
+- **Stress test**: `xeppelin stress <solution> <brute> <generator>`
+
+  Runs three existing binaries until the solution and brute-force outputs differ.
+  On failure it saves `input.in`, `output.out`, and `expected.out`.
+
 - **Start Watching**:   ```
   xeppelin start <contest_name>  ```
   Starts watching the current directory for file modifications and logs them to `<contest_name>.log`.
@@ -68,15 +93,10 @@ Some additional files for the contest (stress-testing, additional solutions, etc
 
 ## Requirements
 
-- `inotify-tools` for file watching.
-- Python packages: `pandas`, `matplotlib`, `numpy`.
-- Verified to work on Ubuntu and WSL2.
+- Python 3.9 or newer.
+- Python packages: `pandas`, `matplotlib`, `numpy`, `watchdog`.
 
-```
-sudo apt install inotify-tools
-
-pip install pandas matplotlib numpy
-```
+File watching is supported on macOS, Linux, and Windows through `watchdog`.
 
 
 ## Contributing

@@ -9,14 +9,12 @@ setup(
         'pandas',
         'matplotlib',
         'numpy',
+        'watchdog',
     ],
     entry_points={
         'console_scripts': [
             'xeppelin=xeppelin.xeppelin:main',
         ],
-    },
-    package_data={
-        'xeppelin': ['xeppelin.sh'],
     },
     author='Konstantin Amelichev',
     author_email='kostya.amelichev@gmail.com',
