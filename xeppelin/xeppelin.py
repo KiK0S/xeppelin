@@ -4,30 +4,189 @@ import os
 import sys
 import subprocess
 import argparse
-from datetime import datetime
+import importlib.util
+import signal
+import shutil
+from pathlib import Path
+
 import xeppelin.xeppelin_logging as xeppelin_logging
 import matplotlib.pyplot as plt
-import importlib.resources
 
 # put to the parent directory to avoid infinite loops
 LOG_DIR = ".."
 
+DEFAULT_COMPILER_FLAGS = ["-O2", "-g", "-std=c++17"]
+SANITIZER_FLAGS = [
+    "-fsanitize=undefined",
+    "-fsanitize=bounds",
+    "-fsanitize=address",
+]
+STRESS_SCRIPT = '''#!/usr/bin/env python3
+import subprocess
+import sys
+
+
+def executable(name):
+    return name if "/" in name else f"./{name}"
+
+
+def main():
+    if len(sys.argv) != 4:
+        raise SystemExit("Usage: stress.py SOLUTION BRUTE GENERATOR")
+
+    solution, brute, generator = map(executable, sys.argv[1:])
+    iteration = 1
+    while True:
+        generated = subprocess.run([generator], capture_output=True, check=True)
+        test_input = generated.stdout
+        solution_run = subprocess.run([solution], input=test_input, capture_output=True)
+        brute_run = subprocess.run([brute], input=test_input, capture_output=True)
+
+        if solution_run.returncode != 0 or brute_run.returncode != 0 or solution_run.stdout != brute_run.stdout:
+            with open("input.in", "wb") as input_file:
+                input_file.write(test_input)
+            with open("output.out", "wb") as output_file:
+                output_file.write(solution_run.stdout)
+            with open("expected.out", "wb") as expected_file:
+                expected_file.write(brute_run.stdout)
+            print(f"Mismatch on test {iteration}. Saved input.in, output.out, and expected.out.")
+            return 1
+
+        print(f"Passed {iteration}", end="\\r", flush=True)
+        iteration += 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+'''
+
+
+def _pid_file(contest_name):
+    return os.path.join(LOG_DIR, f".{contest_name}.xeppelin.pid")
+
+
+def _read_pid(contest_name):
+    try:
+        with open(_pid_file(contest_name), "r") as file:
+            return int(file.read().strip())
+    except (FileNotFoundError, ValueError):
+        return None
+
+
+def _is_running(pid):
+    try:
+        os.kill(pid, 0)
+        return True
+    except (OSError, ProcessLookupError):
+        return False
+
+
 def start(contest_name):
+    if importlib.util.find_spec("watchdog") is None:
+        print("Could not start watcher: the 'watchdog' package is not installed.")
+        return
+
     log_file = os.path.join(LOG_DIR, f"{contest_name}.log")
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
 
-    # Use importlib.resources to find the script path within the xeppelin package
-    script_path = importlib.resources.files('xeppelin').joinpath('xeppelin.sh')
+    existing_pid = _read_pid(contest_name)
+    if existing_pid and _is_running(existing_pid):
+        print(f"Contest '{contest_name}' is already being watched.")
+        return
 
-    # Start the xeppelin.sh script in the background
-    subprocess.Popen([script_path, log_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(
+        [sys.executable, "-m", "xeppelin.watcher", os.getcwd(), os.path.abspath(log_file)],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    with open(_pid_file(contest_name), "w") as file:
+        file.write(str(process.pid))
     print(f"Started watching for contest '{contest_name}'. Log file: {log_file}")
 
+
+def init_contest(contest_name, last_problem, template):
+    contest_directory = Path(contest_name)
+    if contest_directory.exists():
+        raise SystemExit(f"Cannot initialize contest: '{contest_name}' already exists.")
+
+    template_path = Path(template)
+    if not template_path.is_file():
+        raise SystemExit(f"Template file not found: {template}")
+
+    last_problem = last_problem.upper()
+    if len(last_problem) != 1 or not "A" <= last_problem <= "Z":
+        raise SystemExit("LAST_PROBLEM must be a letter from A to Z.")
+
+    contest_directory.mkdir()
+    moved_template = contest_directory / template_path.name
+    shutil.move(str(template_path), moved_template)
+    template_contents = moved_template.read_bytes()
+
+    for codepoint in range(ord("A"), ord(last_problem) + 1):
+        (contest_directory / f"{chr(codepoint)}.cpp").write_bytes(template_contents)
+
+    (contest_directory / "input.in").touch()
+    (contest_directory / "output.out").touch()
+    stress_path = contest_directory / "stress.py"
+    stress_path.write_text(STRESS_SCRIPT)
+    stress_path.chmod(0o755)
+
+    original_directory = Path.cwd()
+    try:
+        os.chdir(contest_directory)
+        start(contest_name)
+    finally:
+        os.chdir(original_directory)
+
+    print(f"Initialized contest '{contest_name}' with problems A-{last_problem}.")
+
+
+def compile_problem(problem, debug=True, sanitize=True):
+    source = Path(f"{problem}.cpp")
+    if not source.is_file():
+        raise SystemExit(f"Source file not found: {source}")
+
+    command = ["g++"]
+    if sanitize:
+        command.extend(SANITIZER_FLAGS)
+    command.extend(DEFAULT_COMPILER_FLAGS)
+    if debug:
+        command.append("-DDEBUG")
+    command.extend(["-o", problem, str(source)])
+    subprocess.run(command, check=True)
+
+
+def run_problem(problem, should_compile=True, debug=True, sanitize=True):
+    if should_compile:
+        compile_problem(problem, debug, sanitize)
+
+    executable = Path(problem)
+    if not executable.is_file():
+        raise SystemExit(f"Executable not found: {problem}")
+
+    with open("input.in", "rb") as input_file, open("output.out", "wb") as output_file:
+        subprocess.run([f"./{problem}"], stdin=input_file, stdout=output_file, check=True)
+
+
+def stress(solution, brute, generator):
+    if not Path("stress.py").is_file():
+        raise SystemExit("stress.py not found. Run this command from an initialized contest directory.")
+    subprocess.run([sys.executable, "stress.py", solution, brute, generator], check=True)
+
+
 def stop(contest_name):
-    # Find and kill the process
-    subprocess.run(["pkill", "xeppelin.sh"])
+    pid = _read_pid(contest_name)
+    if not pid or not _is_running(pid):
+        print(f"No active watcher found for contest '{contest_name}'.")
+        return
+
+    os.kill(pid, signal.SIGTERM)
+    os.remove(_pid_file(contest_name))
     print(f"Stopped watching for contest '{contest_name}'.")
+
 
 def show(contest_name, duration=300, freeze_time=None, title=None, template_name: str = 'template'):
     log_file = os.path.join(LOG_DIR, f"{contest_name}.log")
@@ -62,6 +221,32 @@ def main():
         epilog='For more information, visit: https://github.com/KiK0s/xeppelin'
     )
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
+
+    init_parser = subparsers.add_parser(
+        'init',
+        help='Create and start a new contest directory',
+        epilog='Example: xeppelin init icpc-wf E'
+    )
+    init_parser.add_argument('contest_name', help='Directory and contest name')
+    init_parser.add_argument('last_problem', help='Last problem letter to create (A-Z)')
+    init_parser.add_argument('--template', default='template.cpp',
+                             help='Template file to move into the contest (default: template.cpp)')
+
+    compile_parser = subparsers.add_parser('compile', help='Compile a C++ problem')
+    compile_parser.add_argument('problem', help='Problem name, for example E')
+    compile_parser.add_argument('--no-debug', action='store_true', help='Do not define DEBUG')
+    compile_parser.add_argument('--no-sanitize', action='store_true', help='Disable sanitizers')
+
+    run_parser = subparsers.add_parser('run', help='Compile and run a problem')
+    run_parser.add_argument('problem', help='Problem name, for example E')
+    run_parser.add_argument('--no-compile', action='store_true', help='Run the existing binary')
+    run_parser.add_argument('--no-debug', action='store_true', help='Do not define DEBUG when compiling')
+    run_parser.add_argument('--no-sanitize', action='store_true', help='Disable sanitizers when compiling')
+
+    stress_parser = subparsers.add_parser('stress', help='Stress test two existing binaries')
+    stress_parser.add_argument('solution', help='Solution binary')
+    stress_parser.add_argument('brute', help='Brute-force binary')
+    stress_parser.add_argument('generator', help='Generator binary')
 
     # Create parser for "start" command
     start_parser = subparsers.add_parser(
@@ -127,7 +312,15 @@ def main():
         return
 
     # Execute the appropriate command
-    if args.command == 'start':
+    if args.command == 'init':
+        init_contest(args.contest_name, args.last_problem, args.template)
+    elif args.command == 'compile':
+        compile_problem(args.problem, not args.no_debug, not args.no_sanitize)
+    elif args.command == 'run':
+        run_problem(args.problem, not args.no_compile, not args.no_debug, not args.no_sanitize)
+    elif args.command == 'stress':
+        stress(args.solution, args.brute, args.generator)
+    elif args.command == 'start':
         start(args.contest_name)
     elif args.command == 'stop':
         stop(args.contest_name)
