@@ -9,9 +9,6 @@ import signal
 import shutil
 from pathlib import Path
 
-import xeppelin.xeppelin_logging as xeppelin_logging
-import matplotlib.pyplot as plt
-
 # put to the parent directory to avoid infinite loops
 LOG_DIR = ".."
 
@@ -189,6 +186,9 @@ def stop(contest_name):
 
 
 def show(contest_name, duration=300, freeze_time=None, title=None, template_name: str = 'template'):
+    import matplotlib.pyplot as plt
+    import xeppelin.xeppelin_logging as xeppelin_logging
+
     log_file = os.path.join(LOG_DIR, f"{contest_name}.log")
     if not os.path.exists(log_file):
         print(f"No log file found for contest '{contest_name}'.")
@@ -247,6 +247,9 @@ def main():
     stress_parser.add_argument('solution', help='Solution binary')
     stress_parser.add_argument('brute', help='Brute-force binary')
     stress_parser.add_argument('generator', help='Generator binary')
+
+    from xeppelin import edulcni as edulcni_command
+    edulcni_command.add_parser(subparsers)
 
     # Create parser for "start" command
     start_parser = subparsers.add_parser(
@@ -320,6 +323,8 @@ def main():
         run_problem(args.problem, not args.no_compile, not args.no_debug, not args.no_sanitize)
     elif args.command == 'stress':
         stress(args.solution, args.brute, args.generator)
+    elif args.command == 'edulcni':
+        edulcni_command.run_from_args(args)
     elif args.command == 'start':
         start(args.contest_name)
     elif args.command == 'stop':
