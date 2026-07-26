@@ -43,6 +43,26 @@ pip install xeppelin
 
   Compiles by default, reads from `input.in`, and writes to `output.out`.
 
+- **Run with Edulcni**: `xeppelin edulcni <problem> [options]`
+
+  Compiles the problem with Edulcni instrumentation, starts the native viewer,
+  streams frames while the solution runs, and keeps the viewer open for
+  previous/next navigation after the solution exits. Ordinary `compile` and
+  `run` commands do not include or link Edulcni.
+
+  In a source checkout next to the Edulcni repository, Xeppelin discovers
+  `../edulcni` automatically. Otherwise set `EDULCNI_ROOT` or pass
+  `--edulcni-root`. The built viewer and `libedulcni` must be present below
+  that root; `--viewer`, `--include-dir`, and `--library-dir` can override
+  individual paths.
+
+  ```
+  xeppelin edulcni A
+  xeppelin edulcni A --input sample.in --output sample.out
+  xeppelin edulcni A --edulcni-root /path/to/edulcni
+  ```
+
+
 - **Stress test**: `xeppelin stress <solution> <brute> <generator>`
 
   Runs three existing binaries until the solution and brute-force outputs differ.

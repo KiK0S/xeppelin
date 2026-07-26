@@ -248,6 +248,9 @@ def main():
     stress_parser.add_argument('brute', help='Brute-force binary')
     stress_parser.add_argument('generator', help='Generator binary')
 
+    from xeppelin import edulcni as edulcni_command
+    edulcni_command.add_parser(subparsers)
+
     # Create parser for "start" command
     start_parser = subparsers.add_parser(
         'start',
@@ -320,6 +323,8 @@ def main():
         run_problem(args.problem, not args.no_compile, not args.no_debug, not args.no_sanitize)
     elif args.command == 'stress':
         stress(args.solution, args.brute, args.generator)
+    elif args.command == 'edulcni':
+        edulcni_command.run_from_args(args)
     elif args.command == 'start':
         start(args.contest_name)
     elif args.command == 'stop':
