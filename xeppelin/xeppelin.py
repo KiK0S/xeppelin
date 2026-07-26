@@ -9,6 +9,9 @@ import signal
 import shutil
 from pathlib import Path
 
+import xeppelin.xeppelin_logging as xeppelin_logging
+import matplotlib.pyplot as plt
+
 # put to the parent directory to avoid infinite loops
 LOG_DIR = ".."
 
@@ -186,9 +189,6 @@ def stop(contest_name):
 
 
 def show(contest_name, duration=300, freeze_time=None, title=None, template_name: str = 'template'):
-    import matplotlib.pyplot as plt
-    import xeppelin.xeppelin_logging as xeppelin_logging
-
     log_file = os.path.join(LOG_DIR, f"{contest_name}.log")
     if not os.path.exists(log_file):
         print(f"No log file found for contest '{contest_name}'.")

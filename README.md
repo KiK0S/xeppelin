@@ -62,6 +62,7 @@ pip install xeppelin
   xeppelin edulcni A --edulcni-root /path/to/edulcni
   ```
 
+
 - **Stress test**: `xeppelin stress <solution> <brute> <generator>`
 
   Runs three existing binaries until the solution and brute-force outputs differ.
