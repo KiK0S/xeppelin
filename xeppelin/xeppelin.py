@@ -174,6 +174,8 @@ def run_problem(problem, should_compile=True, debug=True, sanitize=True):
 def stress(solution, brute, generator):
     if not Path("stress.py").is_file():
         raise SystemExit("stress.py not found. Run this command from an initialized contest directory.")
+    for problem in (solution, brute, generator):
+        compile_problem(problem, debug=False, sanitize=True)
     subprocess.run([sys.executable, "stress.py", solution, brute, generator], check=True)
 
 
@@ -243,10 +245,10 @@ def main():
     run_parser.add_argument('--no-debug', action='store_true', help='Do not define DEBUG when compiling')
     run_parser.add_argument('--no-sanitize', action='store_true', help='Disable sanitizers when compiling')
 
-    stress_parser = subparsers.add_parser('stress', help='Stress test two existing binaries')
-    stress_parser.add_argument('solution', help='Solution binary')
-    stress_parser.add_argument('brute', help='Brute-force binary')
-    stress_parser.add_argument('generator', help='Generator binary')
+    stress_parser = subparsers.add_parser('stress', help='Compile and stress test a solution')
+    stress_parser.add_argument('solution', help='Solution source name without .cpp')
+    stress_parser.add_argument('brute', help='Brute-force source name without .cpp')
+    stress_parser.add_argument('generator', help='Generator source name without .cpp')
 
     from xeppelin import edulcni as edulcni_command
     edulcni_command.add_parser(subparsers)

@@ -65,8 +65,9 @@ pip install xeppelin
 
 - **Stress test**: `xeppelin stress <solution> <brute> <generator>`
 
-  Runs three existing binaries until the solution and brute-force outputs differ.
-  On failure it saves `input.in`, `output.out`, and `expected.out`.
+  Compiles the three corresponding C++ sources with sanitizers enabled and
+  `DEBUG` omitted, then runs them until the solution and brute-force outputs
+  differ. On failure it saves `input.in`, `output.out`, and `expected.out`.
 
 - **Start Watching**:   ```
   xeppelin start <contest_name>  ```
