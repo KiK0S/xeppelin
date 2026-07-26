@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 
 # put to the parent directory to avoid infinite loops
 LOG_DIR = ".."
+DEFAULT_TEMPLATE = Path(__file__).with_name("template.cpp")
 
 DEFAULT_COMPILER_FLAGS = ["-O2", "-g", "-std=c++17"]
 SANITIZER_FLAGS = [
@@ -112,7 +113,7 @@ def init_contest(contest_name, last_problem, template):
     if contest_directory.exists():
         raise SystemExit(f"Cannot initialize contest: '{contest_name}' already exists.")
 
-    template_path = Path(template)
+    template_path = Path(template) if template else DEFAULT_TEMPLATE
     if not template_path.is_file():
         raise SystemExit(f"Template file not found: {template}")
 
@@ -231,8 +232,10 @@ def main():
     )
     init_parser.add_argument('contest_name', help='Directory and contest name')
     init_parser.add_argument('last_problem', help='Last problem letter to create (A-Z)')
-    init_parser.add_argument('--template', default='template.cpp',
-                             help='Template file to move into the contest (default: template.cpp)')
+    init_parser.add_argument(
+        '--template',
+        help='Template file to copy into the contest (default: bundled template.cpp)',
+    )
 
     compile_parser = subparsers.add_parser('compile', help='Compile a C++ problem')
     compile_parser.add_argument('problem', help='Problem name, for example E')

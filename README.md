@@ -14,7 +14,8 @@ pip install xeppelin
 
 1. Prior to the contest, create a new contest directory. Let's say it's called icpc-wf.
 2. Run `xeppelin start icpc-wf` to start watching the directory.
-3. Start the contest by writing a template file. Xeppelin team uses `template.cpp`.
+3. Start the contest. Xeppelin uses its bundled `template.cpp` unless you provide
+   a custom one.
 4. When solving a problem, create a new file with the problem letter. For example, if you're solving problem A, create a file named `A.cpp`.
 5. When you compile the code, use `-o` flag to specify the problem letter. For example, `g++ A.cpp -o A`.
 6. After the contest, run `xeppelin stop icpc-wf` to stop watching the directory.
@@ -25,9 +26,10 @@ pip install xeppelin
 
 - **Initialize a contest**: `xeppelin init <name> <last_problem> [--template PATH]`
 
-  Creates the contest directory, copies `template.cpp` into it, creates problem files
-  from `A.cpp` through the given letter, adds `input.in`, `output.out`, and
-  `stress.py`, then starts the watcher. The command fails if the directory exists.
+  Creates the contest directory, copies the bundled `template.cpp` into it, creates
+  problem files from `A.cpp` through the given letter, adds `input.in`, `output.out`,
+  and `stress.py`, then starts the watcher. Use `--template PATH` to copy a custom
+  template instead. The command fails if the directory exists.
 
   ```
   xeppelin init icpc-wf E
