@@ -121,9 +121,9 @@ def init_contest(contest_name, last_problem, template):
         raise SystemExit("LAST_PROBLEM must be a letter from A to Z.")
 
     contest_directory.mkdir()
-    moved_template = contest_directory / template_path.name
-    shutil.move(str(template_path), moved_template)
-    template_contents = moved_template.read_bytes()
+    copied_template = contest_directory / template_path.name
+    shutil.copy2(template_path, copied_template)
+    template_contents = copied_template.read_bytes()
 
     for codepoint in range(ord("A"), ord(last_problem) + 1):
         (contest_directory / f"{chr(codepoint)}.cpp").write_bytes(template_contents)

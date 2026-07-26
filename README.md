@@ -25,7 +25,7 @@ pip install xeppelin
 
 - **Initialize a contest**: `xeppelin init <name> <last_problem> [--template PATH]`
 
-  Creates the contest directory, moves `template.cpp` into it, creates problem files
+  Creates the contest directory, copies `template.cpp` into it, creates problem files
   from `A.cpp` through the given letter, adds `input.in`, `output.out`, and
   `stress.py`, then starts the watcher. The command fails if the directory exists.
 
