@@ -95,12 +95,12 @@ pip install xeppelin
   ```
 
 - **Log Submissions**:   ```
-  xeppelin log-submissions <contest_name> <submission_info>  ```
+  xeppelin log <contest_name> <submission_info>  ```
   Adds additional submission information to the log file for the specified contest.
   Usually should be used to log the time of the submission.
   Example:
   ```
-  xeppelin log-submissions test "A solved 1:30"
+  xeppelin log test "A solved 1:30"
   ```
 
 - **Help**:   ```
