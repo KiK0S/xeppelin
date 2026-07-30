@@ -8,6 +8,18 @@ Xeppelin is a contest watcher software that keeps track of file modifications du
 pip install xeppelin
 ```
 
+GitHub Releases also provide a wheel and source distribution without
+publishing to PyPI. Download the wheel from the
+[latest release](https://github.com/KiK0S/xeppelin/releases/latest), then run:
+
+```sh
+python -m pip install xeppelin-*.whl
+```
+
+Release tags must match the version in `setup.py`. Pushing a `v*` tag builds
+both distributions, installs the wheel as a validation step, and attaches the
+files to the GitHub Release.
+
 ![](./example.png)
 
 ## Workflow
