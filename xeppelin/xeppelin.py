@@ -180,15 +180,33 @@ def stress(solution, brute, generator):
     subprocess.run([sys.executable, "stress.py", solution, brute, generator], check=True)
 
 
-def stop(contest_name):
-    pid = _read_pid(contest_name)
-    if not pid or not _is_running(pid):
-        print(f"No active watcher found for contest '{contest_name}'.")
-        return
+def stop(contest_name, template):
+    template_path = Path(template) if template else DEFAULT_TEMPLATE
+    if not template_path.is_file():
+        raise SystemExit(f"Template file not found: {template}")
 
-    os.kill(pid, signal.SIGTERM)
-    os.remove(_pid_file(contest_name))
-    print(f"Stopped watching for contest '{contest_name}'.")
+    pid = _read_pid(contest_name)
+    if pid and _is_running(pid):
+        os.kill(pid, signal.SIGTERM)
+        os.remove(_pid_file(contest_name))
+        print(f"Stopped watching for contest '{contest_name}'.")
+    else:
+        print(f"No active watcher found for contest '{contest_name}'.")
+
+    template_contents = template_path.read_bytes()
+    removed_files = []
+    for problem in "ABCDEFGHIJKLMNOPQRSTUVWXYZ":
+        source = Path(f"{problem}.cpp")
+        if source.is_file() and source.resolve() != template_path.resolve() and source.read_bytes() == template_contents:
+            source.unlink()
+            removed_files.append(source.name)
+
+    if removed_files:
+        print(f"Removed unchanged problem files: {', '.join(removed_files)}")
+
+    solved_problems = input("Solved problems (for example ABC): ").strip().upper()
+    if solved_problems:
+        log_submissions(contest_name, f"solved: {solved_problems}")
 
 
 def show(contest_name, duration=300, freeze_time=None, title=None, template_name: str = 'template'):
@@ -275,6 +293,10 @@ def main():
     )
     stop_parser.add_argument('contest_name',
                             help='Name of the contest to stop watching. Should match the name used with the start command.')
+    stop_parser.add_argument(
+        '--template',
+        help='Template to compare against when removing unchanged problem files (default: bundled template.cpp)',
+    )
 
     # Create parser for "show" command
     show_parser = subparsers.add_parser(
@@ -333,7 +355,7 @@ def main():
     elif args.command == 'start':
         start(args.contest_name)
     elif args.command == 'stop':
-        stop(args.contest_name)
+        stop(args.contest_name, args.template)
     elif args.command == 'show':
         show(args.contest_name, args.duration, args.freeze, args.title, args.template)
     elif args.command == 'log':

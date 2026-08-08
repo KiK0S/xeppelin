@@ -30,8 +30,8 @@ files to the GitHub Release.
    a custom one.
 4. When solving a problem, create a new file with the problem letter. For example, if you're solving problem A, create a file named `A.cpp`.
 5. When you compile the code, use `-o` flag to specify the problem letter. For example, `g++ A.cpp -o A`.
-6. After the contest, run `xeppelin stop icpc-wf` to stop watching the directory.
-7. Looking through your submissions, you can see the time of each successful submission. Add them manually to the log file with `xeppelin log icpc-wf "A solved 1:30"`.
+6. After the contest, run `xeppelin stop icpc-wf` to stop watching the directory. Xeppelin removes unchanged problem files and asks which problems were solved.
+7. Looking through your submissions, you can see the time of each successful submission. Add them manually to the log file with `xeppelin log icpc-wf "A solved 1:30"` if you want to include exact solve times.
 8. Run `xeppelin show icpc-wf` to see the visualization and get the image on your disk.
 
 ## Commands
@@ -88,8 +88,10 @@ files to the GitHub Release.
   Starts watching the current directory for file modifications and logs them to `<contest_name>.log`.
 
 - **Stop Watching**:   ```
-  xeppelin stop <contest_name>  ```
-  Stops watching for the specified contest.
+  xeppelin stop <contest_name> [--template PATH]  ```
+  Stops watching for the specified contest, removes letter-named problem files that
+  still match the template, and asks for the solved problem letters. Use
+  `--template PATH` when the contest uses a custom template.
 
 - **Show Visualization**:   ```
   xeppelin show <contest_name> [--duration MINUTES] [--freeze TIME]  ```
