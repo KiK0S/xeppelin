@@ -172,7 +172,7 @@ const int MAXN = 1e6 + 10;
 int n;
 
 void solve() {
-
+    read(n);
 }
 
 signed main() {
@@ -181,7 +181,6 @@ signed main() {
     freopen("output.out", "w", stdout);
     #endif
     ios_base::sync_with_stdio(0); cin.tie(0);
-    int _t; read(_t);
-    while (read(n)) solve();
+    solve();
     cerr << "Runtime is: " << clock() * 1.0 / CLOCKS_PER_SEC << endl;
 }
