@@ -36,6 +36,17 @@ files to the GitHub Release.
 
 ## Commands
 
+- **Create a source file**: `xeppelin create <file> [--multitest] [--template PATH]`
+
+  Copies the bundled C++ template into a new file. Use `--multitest` to read a
+  test count and call `solve()` once per test, or `--template PATH` to use a
+  custom template. Existing files are never overwritten.
+
+  ```
+  xeppelin create A.cpp
+  xeppelin create A.cpp --multitest
+  ```
+
 - **Initialize a contest**: `xeppelin init <name> <last_problem> [--template PATH]`
 
   Creates the contest directory, copies the bundled `template.cpp` into it, creates

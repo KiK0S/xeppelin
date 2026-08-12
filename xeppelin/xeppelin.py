@@ -15,6 +15,11 @@ import matplotlib.pyplot as plt
 # put to the parent directory to avoid infinite loops
 LOG_DIR = ".."
 DEFAULT_TEMPLATE = Path(__file__).with_name("template.cpp")
+SINGLE_TEST_MAIN = "    solve();\n"
+MULTITEST_MAIN = """    int test_count;
+    read(test_count);
+    while (test_count--) solve();
+"""
 
 DEFAULT_COMPILER_FLAGS = ["-O2", "-g", "-std=c++17"]
 SANITIZER_FLAGS = [
@@ -145,6 +150,25 @@ def init_contest(contest_name, last_problem, template):
     print(f"Initialized contest '{contest_name}' with problems A-{last_problem}.")
 
 
+def create_file(filename, template, multitest=False):
+    destination = Path(filename)
+    if destination.exists():
+        raise SystemExit(f"Cannot create file: '{filename}' already exists.")
+
+    template_path = Path(template) if template else DEFAULT_TEMPLATE
+    if not template_path.is_file():
+        raise SystemExit(f"Template file not found: {template_path}")
+
+    contents = template_path.read_text()
+    if multitest:
+        if SINGLE_TEST_MAIN not in contents:
+            raise SystemExit("Template must contain an indented 'solve();' line to use --multitest.")
+        contents = contents.replace(SINGLE_TEST_MAIN, MULTITEST_MAIN, 1)
+
+    destination.write_text(contents)
+    print(f"Created '{filename}'.")
+
+
 def compile_problem(problem, debug=True, sanitize=True):
     source = Path(f"{problem}.cpp")
     if not source.is_file():
@@ -255,6 +279,22 @@ def main():
         help='Template file to copy into the contest (default: bundled template.cpp)',
     )
 
+    create_parser = subparsers.add_parser(
+        'create',
+        help='Create a single C++ source file from a template',
+        epilog='Example: xeppelin create A.cpp --multitest',
+    )
+    create_parser.add_argument('filename', help='Source file to create, for example A.cpp')
+    create_parser.add_argument(
+        '--template',
+        help='Template file to copy (default: bundled template.cpp)',
+    )
+    create_parser.add_argument(
+        '--multitest',
+        action='store_true',
+        help='Read a test count and call solve() once per test',
+    )
+
     compile_parser = subparsers.add_parser('compile', help='Compile a C++ problem')
     compile_parser.add_argument('problem', help='Problem name, for example E')
     compile_parser.add_argument('--no-debug', action='store_true', help='Do not define DEBUG')
@@ -344,6 +384,8 @@ def main():
     # Execute the appropriate command
     if args.command == 'init':
         init_contest(args.contest_name, args.last_problem, args.template)
+    elif args.command == 'create':
+        create_file(args.filename, args.template, args.multitest)
     elif args.command == 'compile':
         compile_problem(args.problem, not args.no_debug, not args.no_sanitize)
     elif args.command == 'run':
